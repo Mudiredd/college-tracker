@@ -11,3 +11,9 @@ beautifulsoup4
 lxml
 PyPDF2
 pdfplumber
+pdfplumber
+aiohttp
+requests
+flask
+flask-cors
+gunicorn
