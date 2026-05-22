@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>SR & BGNR College Tracker</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:'Segoe UI',sans-serif;
+      background:#0f0f1a;
+      color:#fff;
+      min-height:100vh;
+    }
+
+    a{
+      text-decoration:none;
+    }
+
+    /* =========================
+       TOPBAR
+    ========================== */
+
+    .topbar{
+      background:#1a1a2e;
+      padding:14px 24px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid #ffffff10;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .topbar-title{
+      color:#00d4ff;
+      font-weight:bold;
+      font-size:1rem;
+    }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .topbar-right a{
+      color:#aaa;
+      font-size:.88rem;
+    }
+
+    .topbar-right a:hover{
+      color:#fff;
+    }
+
+    .searches-left-green{
+      color:#00e676;
+      font-size:.85rem;
+    }
+
+    .searches-left-red{
+      color:#ff5252;
+      font-size:.85rem;
+    }
+
+    /* =========================
+       HERO
+    ========================== */
+
+    .hero{
+      padding:60px 20px 40px;
+      text-align:center;
+      background:linear-gradient(
+        135deg,
+        #1a1a2e,
+        #16213e
+      );
+    }
+
+    .hero h1{
+      color:#00d4ff;
+      font-size:2.5rem;
+      margin-bottom:12px;
+    }
+
+    .hero p{
+      color:#aaa;
+      max-width:750px;
+      margin:auto;
+      line-height:1.7;
+    }
+
+    /* =========================
+       SEARCH
+    ========================== */
+
+    .search-box{
+      display:flex;
+      justify-content:center;
+      gap:14px;
+      padding:30px 20px;
+      flex-wrap:wrap;
+    }
+
+    .search-box input{
+      width:350px;
+      max-width:100%;
+      padding:15px 18px;
+      border:none;
+      border-radius:14px;
+      background:#1a1a2e;
+      color:#fff;
+      border:2px solid #00d4ff33;
+      font-size:1rem;
+    }
+
+    .search-box input:focus{
+      outline:none;
+      border-color:#00d4ff;
+    }
+
+    .btn{
+      border:none;
+      padding:14px 24px;
+      border-radius:14px;
+      font-weight:bold;
+      cursor:pointer;
+      color:#fff;
+      transition:.2s;
+    }
+
+    .btn:hover{
+      transform:translateY(-2px);
+    }
+
+    .search-btn{
+      background:linear-gradient(
+        135deg,
+        #00d4ff,
+        #0077ff
+      );
+    }
+
+    .cancel-btn{
+      background:linear-gradient(
+        135deg,
+        #ff5252,
+        #c62828
+      );
+      display:none;
+    }
+
+    .download-btn{
+      background:linear-gradient(
+        135deg,
+        #00c853,
+        #009624
+      );
+      display:none;
+    }
+
+    /* =========================
+       LOADING
+    ========================== */
+
+    .loading{
+      max-width:900px;
+      margin:auto;
+      display:none;
+      padding:20px;
+    }
+
+    .spinner{
+      width:50px;
+      height:50px;
+      border-radius:50%;
+      border:5px solid #00d4ff33;
+      border-top:5px solid #00d4ff;
+      margin:0 auto 20px;
+      animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    #currentStep{
+      text-align:center;
+      color:#00d4ff;
+      font-weight:bold;
+      margin-bottom:16px;
+    }
+
+    .progress-container{
+      width:100%;
+      height:20px;
+      border-radius:20px;
+      overflow:hidden;
+      background:#1a1a2e;
+      border:1px solid #ffffff10;
+      margin-bottom:25px;
+    }
+
+    .progress-bar{
+      width:0%;
+      height:100%;
+      background:linear-gradient(
+        90deg,
+        #00d4ff,
+        #0077ff
+      );
+      transition:.4s;
+    }
+
+    .steps{
+      margin-top:20px;
+    }
+
+    .step-item{
+      background:#ffffff08;
+      border:1px solid #ffffff10;
+      padding:12px 16px;
+      border-radius:12px;
+      margin-bottom:10px;
+      color:#ddd;
+      font-size:.92rem;
+    }
+
+    /* =========================
+       ERROR
+    ========================== */
+
+    .error-msg{
+      max-width:900px;
+      margin:20px auto;
+      padding:16px;
+      border-radius:12px;
+      background:#ff525220;
+      border:1px solid #ff5252;
+      color:#ff8a80;
+      display:none;
+      text-align:center;
+      font-weight:bold;
+    }
+
+    /* =========================
+       DASHBOARD
+    ========================== */
+
+    .dashboard{
+      max-width:1200px;
+      margin:auto;
+      padding:20px;
+      display:none;
+    }
+
+    .summary-box{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(220px,1fr));
+      gap:20px;
+      margin-bottom:30px;
+    }
+
+    .summary-card{
+      background:#1a1a2e;
+      border:1px solid #ffffff10;
+      border-radius:18px;
+      padding:22px;
+      text-align:center;
+    }
+
+    .summary-card h3{
+      color:#00d4ff;
+      margin-bottom:10px;
+    }
+
+    .semester-card{
+      background:#1a1a2e;
+      border-radius:18px;
+      padding:22px;
+      margin-bottom:25px;
+      border:1px solid #ffffff10;
+      overflow:auto;
+    }
+
+    .semester-title{
+      color:#00d4ff;
+      margin-bottom:10px;
+      font-size:1.4rem;
+    }
+
+    .exam-name{
+      color:#aaa;
+      margin-bottom:18px;
+    }
+
+    .subjects-table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    .subjects-table th{
+      background:#00d4ff;
+      color:#000;
+      padding:12px;
+      text-align:left;
+    }
+
+    .subjects-table td{
+      padding:12px;
+      border-bottom:1px solid #ffffff10;
+      font-size:.92rem;
+    }
+
+    .subjects-table tr:hover{
+      background:#ffffff06;
+    }
+
+    .pass{
+      color:#00e676;
+      font-weight:bold;
+    }
+
+    .fail{
+      color:#ff5252;
+      font-weight:bold;
+    }
+
+    /* =========================
+       DOWNLOADS
+    ========================== */
+
+    .downloads-section{
+      max-width:1200px;
+      margin:40px auto;
+      padding:20px;
+    }
+
+    .downloads-title{
+      color:#00d4ff;
+      margin-bottom:20px;
+    }
+
+    .downloads-grid{
+      display:grid;
+      grid-template-columns:
+      repeat(auto-fit,minmax(250px,1fr));
+      gap:20px;
+    }
+
+    .download-card{
+      background:#1a1a2e;
+      border-radius:16px;
+      padding:20px;
+      border:1px solid #ffffff10;
+    }
+
+    .download-card h4{
+      color:#00d4ff;
+      margin-bottom:10px;
+    }
+
+    .download-card p{
+      color:#aaa;
+      margin-bottom:15px;
+      font-size:.9rem;
+    }
+
+    .download-card button{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      background:#00d4ff;
+      color:#000;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<!-- =========================
+     TOPBAR
+========================= -->
+
+<div class="topbar">
+
+  <div class="topbar-title">
+    🎓 SR & BGNR College Tracker
+  </div>
+
+  <div class="topbar-right">
+
+    <span>
+      👋 {{ user.name }}
+    </span>
+
+    <span class="{{ 'searches-left-red' if searches_left == 0 else 'searches-left-green' }}">
+      {{ searches_left }} searches left today
+    </span>
+
+    <a href="{{ url_for('account') }}">
+      Account
+    </a>
+
+    <!-- ✅ ONLY SHOW IF NOT SUBSCRIBED -->
+    {% if not sub %}
+    <a href="{{ url_for('subscribe') }}">
+      Subscribe
+    </a>
+    {% endif %}
+
+    <a href="#downloads">
+      Downloads
+    </a>
+
+    <a href="{{ url_for('auth.logout') }}">
+      Logout
+    </a>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     HERO
+========================= -->
+
+<div class="hero">
+
+  <h1>
+    🎓 SR & BGNR College Tracker
+  </h1>
+
+  <p>
+    Search semester results, track academic progress,
+    and download professional PDF reports instantly.
+  </p>
+
+</div>
+
+<!-- =========================
+     SEARCH
+========================= -->
+
+<div class="search-box">
+
+  <input
+    type="text"
+    id="regdNo"
+    placeholder="Enter Registration Number..."
+  />
+
+  <button
+    class="btn search-btn"
+    id="searchBtn"
+    onclick="fetchResults()"
+  >
+    Search
+  </button>
+
+  <button
+    class="btn cancel-btn"
+    id="cancelBtn"
+    onclick="cancelSearch()"
+  >
+    Cancel
+  </button>
+
+  <button
+    class="btn download-btn"
+    id="downloadBtn"
+    onclick="downloadPDF()"
+  >
+    Download PDF
+  </button>
+
+</div>
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div
+  class="loading"
+  id="loading"
+>
+
+  <div class="spinner"></div>
+
+  <div id="currentStep">
+    Connecting...
+  </div>
+
+  <div class="progress-container">
+    <div
+      class="progress-bar"
+      id="progressBar"
+    ></div>
+  </div>
+
+  <div
+    class="steps"
+    id="stepsContainer"
+  ></div>
+
+</div>
+
+<!-- ERROR -->
+
+<div
+  class="error-msg"
+  id="errorMsg"
+></div>
+
+<!-- DASHBOARD -->
+
+<div
+  class="dashboard"
+  id="dashboard"
+></div>
+
+<!-- =========================
+     DOWNLOADS
+========================= -->
+
+<div
+  class="downloads-section"
+  id="downloads"
+>
+
+  <h2 class="downloads-title">
+    📥 Download History
+  </h2>
+
+  <div
+    class="downloads-grid"
+    id="downloadsGrid"
+  >
+
+    <div class="download-card">
+
+      <h4>
+        No Downloads Yet
+      </h4>
+
+      <p>
+        Your downloaded PDF reports will appear here.
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+let abortController = null;
+
+let latestData = null;
+
+let latestRegdNo = null;
+
+/* =========================
+   FETCH RESULTS
+========================= */
+
+async function fetchResults(){
+
+  const regdNo =
+    document
+    .getElementById("regdNo")
+    .value
+    .trim();
+
+  if(!regdNo){
+
+    alert(
+      "Please enter Registration Number"
+    );
+
+    return;
+  }
+
+  latestRegdNo = regdNo;
+
+  resetUI();
+
+  document
+    .getElementById("loading")
+    .style.display = "block";
+
+  document
+    .getElementById("searchBtn")
+    .style.display = "none";
+
+  document
+    .getElementById("cancelBtn")
+    .style.display = "inline-block";
+
+  abortController = new AbortController();
+
+  try{
+
+    const res = await fetch(
+      "/get_results",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+          regd_no:regdNo
+        }),
+
+        signal:abortController.signal
+      }
+    );
+
+    const reader = res.body.getReader();
+
+    const decoder = new TextDecoder();
+
+    while(true){
+
+      const {done,value} =
+        await reader.read();
+
+      if(done) break;
+
+      const chunk =
+        decoder.decode(value);
+
+      const lines =
+        chunk.split("\n");
+
+      for(const line of lines){
+
+        if(
+          !line.startsWith("data: ")
+        ) continue;
+
+        try{
+
+          const event =
+            JSON.parse(line.slice(6));
+
+          /* STEP */
+
+          if(event.type === "step"){
+
+            document
+              .getElementById("currentStep")
+              .textContent =
+              event.message;
+
+            addStep(event.message);
+          }
+
+          /* PROGRESS */
+
+          if(event.type === "progress"){
+
+            document
+              .getElementById("currentStep")
+              .textContent =
+              event.message;
+
+            document
+              .getElementById("progressBar")
+              .style.width =
+              event.progress + "%";
+
+            addStep(event.message);
+          }
+
+          /* SEARCH COUNT */
+
+          if(
+            event.type ===
+            "searches_update"
+          ){
+
+            updateSearchCount(
+              event.searches_left
+            );
+          }
+
+          /* DONE */
+
+          if(event.type === "done"){
+
+            latestData =
+              event.data;
+
+            document
+              .getElementById("loading")
+              .style.display =
+              "none";
+
+            document
+              .getElementById("dashboard")
+              .style.display =
+              "block";
+
+            document
+              .getElementById("downloadBtn")
+              .style.display =
+              "inline-block";
+
+            renderDashboard(
+              event.data
+            );
+
+            resetButtons();
+          }
+
+          /* ERROR */
+
+          if(event.type === "error"){
+
+            showError(
+              event.message
+            );
+
+            resetButtons();
+          }
+
+        }catch(err){
+
+          console.error(err);
+        }
+      }
+    }
+
+  }catch(err){
+
+    if(
+      err.name === "AbortError"
+    ){
+
+      showError(
+        "🚫 Search Cancelled"
+      );
+
+    }else{
+
+      showError(
+        "Something went wrong"
+      );
+    }
+
+    resetButtons();
+  }
+}
+
+/* =========================
+   RENDER DASHBOARD
+========================= */
+
+function renderDashboard(data){
+
+  let html = "";
+
+  let totalSubjects = 0;
+
+  let totalCredits = 0;
+
+  for(let sem=1; sem<=6; sem++){
+
+    const semData =
+      data[String(sem)];
+
+    if(
+      !semData ||
+      !semData.regular
+    ) continue;
+
+    const subjects =
+      semData.regular.subjects;
+
+    totalSubjects +=
+      subjects.length;
+
+    subjects.forEach(s=>{
+
+      totalCredits += parseFloat(
+        s.credits || 0
+      );
+
+    });
+  }
+
+  /* SUMMARY */
+
+  html += `
+
+    <div class="summary-box">
+
+      <div class="summary-card">
+        <h3>Total Subjects</h3>
+        <p>${totalSubjects}</p>
+      </div>
+
+      <div class="summary-card">
+        <h3>Total Credits</h3>
+        <p>${totalCredits}</p>
+      </div>
+
+      <div class="summary-card">
+        <h3>Registration No</h3>
+        <p>${latestRegdNo}</p>
+      </div>
+
+    </div>
+
+  `;
+
+  /* SEMESTERS */
+
+  for(let sem=1; sem<=6; sem++){
+
+    const semData =
+      data[String(sem)];
+
+    if(
+      !semData ||
+      !semData.regular
+    ) continue;
+
+    html += `
+
+      <div class="semester-card">
+
+        <div class="semester-title">
+          Semester ${sem}
+        </div>
+
+        <div class="exam-name">
+          Exam:
+          ${semData.regular.exam}
+        </div>
+
+        <table class="subjects-table">
+
+          <tr>
+            <th>#</th>
+            <th>Subject</th>
+            <th>Grade</th>
+            <th>Credits</th>
+            <th>Status</th>
+          </tr>
+
+    `;
+
+    semData.regular.subjects.forEach(
+      (s,index)=>{
+
+      html += `
+
+        <tr>
+
+          <td>${index+1}</td>
+
+          <td>${s.subject}</td>
+
+          <td>${s.grade}</td>
+
+          <td>${s.credits}</td>
+
+          <td class="${s.status}">
+            ${s.status.toUpperCase()}
+          </td>
+
+        </tr>
+
+      `;
+    });
+
+    html += `
+
+        </table>
+
+      </div>
+
+    `;
+  }
+
+  document
+    .getElementById("dashboard")
+    .innerHTML = html;
+}
+
+/* =========================
+   DOWNLOAD PDF
+========================= */
+
+async function downloadPDF(){
+
+  if(!latestData){
+
+    alert("No data available");
+
+    return;
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "data",
+    JSON.stringify(latestData)
+  );
+
+  formData.append(
+    "regd_no",
+    latestRegdNo
+  );
+
+  try{
+
+    const response =
+      await fetch(
+        "/generate-pdf",
+        {
+          method:"POST",
+          body:formData
+        }
+      );
+
+    const blob =
+      await response.blob();
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    const filename =
+      `SR-BGNR-${latestRegdNo}.pdf`;
+
+    a.download = filename;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    saveDownloadHistory(
+      filename
+    );
+
+  }catch(err){
+
+    alert(
+      "PDF download failed"
+    );
+  }
+}
+
+/* =========================
+   DOWNLOAD HISTORY
+========================= */
+
+function saveDownloadHistory(filename){
+
+  let history = JSON.parse(
+    localStorage.getItem(
+      "downloads"
+    ) || "[]"
+  );
+
+  history.unshift({
+
+    filename:filename,
+
+    date:new Date()
+      .toLocaleString()
+
+  });
+
+  localStorage.setItem(
+    "downloads",
+    JSON.stringify(history)
+  );
+
+  renderDownloadHistory();
+}
+
+function renderDownloadHistory(){
+
+  const grid =
+    document.getElementById(
+      "downloadsGrid"
+    );
+
+  let history = JSON.parse(
+    localStorage.getItem(
+      "downloads"
+    ) || "[]"
+  );
+
+  if(history.length === 0){
+
+    grid.innerHTML = `
+
+      <div class="download-card">
+
+        <h4>No Downloads Yet</h4>
+
+        <p>
+          Your PDF downloads
+          appear here.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  history.forEach(item=>{
+
+    grid.innerHTML += `
+
+      <div class="download-card">
+
+        <h4>
+          📄 ${item.filename}
+        </h4>
+
+        <p>
+          ${item.date}
+        </p>
+
+      </div>
+
+    `;
+  });
+}
+
+/* =========================
+   HELPERS
+========================= */
+
+function addStep(text){
+
+  const container =
+    document.getElementById(
+      "stepsContainer"
+    );
+
+  const div =
+    document.createElement("div");
+
+  div.className = "step-item";
+
+  div.textContent = text;
+
+  container.prepend(div);
+}
+
+function showError(msg){
+
+  document
+    .getElementById("loading")
+    .style.display = "none";
+
+  const err =
+    document
+    .getElementById("errorMsg");
+
+  err.textContent = msg;
+
+  err.style.display = "block";
+}
+
+function resetButtons(){
+
+  document
+    .getElementById("searchBtn")
+    .style.display =
+    "inline-block";
+
+  document
+    .getElementById("cancelBtn")
+    .style.display =
+    "none";
+}
+
+function resetUI(){
+
+  document
+    .getElementById("dashboard")
+    .style.display =
+    "none";
+
+  document
+    .getElementById("dashboard")
+    .innerHTML = "";
+
+  document
+    .getElementById("errorMsg")
+    .style.display =
+    "none";
+
+  document
+    .getElementById("stepsContainer")
+    .innerHTML = "";
+
+  document
+    .getElementById("progressBar")
+    .style.width =
+    "0%";
+
+  document
+    .getElementById("downloadBtn")
+    .style.display =
+    "none";
+}
+
+function cancelSearch(){
+
+  if(abortController){
+
+    abortController.abort();
+  }
+}
+
+function updateSearchCount(left){
+
+  const el =
+    document.querySelector(
+      ".searches-left-green, .searches-left-red"
+    );
+
+  if(!el) return;
+
+  el.textContent =
+    left + " searches left today";
+
+  el.className =
+    left === 0
+    ? "searches-left-red"
+    : "searches-left-green";
+}
+
+/* =========================
+   INITIAL LOAD
+========================= */
+
+renderDownloadHistory();
+
+</script>
+
+</body>
+
+</html>

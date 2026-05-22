@@ -1,0 +1,12 @@
+Flask
+Flask-Cors
+Flask-Login
+Flask-Mail
+Flask-SQLAlchemy
+Flask-Bcrypt
+requests
+reportlab
+gunicorn
+beautifulsoup4
+lxml
+PyPDF2
