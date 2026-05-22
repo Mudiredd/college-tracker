@@ -10,4 +10,4 @@ gunicorn
 beautifulsoup4
 lxml
 PyPDF2
-pip freeze > requirements.txt
+pdfplumber
