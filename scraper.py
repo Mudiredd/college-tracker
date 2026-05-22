@@ -1,86 +1,129 @@
-# scraper.py
+import requests
+from bs4 import BeautifulSoup
+import urllib3
+import pdfplumber
+import io
 
-from typing import List, Dict
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# -----------------------------
-# 1. SEMESTER → EXAM PERIOD MAP
-# -----------------------------
-SEM_TO_EXAMS = {
-    1: [1, 2],
-    2: [1, 2, 3],
-    3: [1, 2, 3, 4],
-    4: [1, 2, 3, 4, 5],
-    5: [1, 2, 3, 4, 5, 6],
-    6: [1, 2, 3, 4, 5, 6, 7],
-    7: [1, 2, 3, 4, 5, 6, 7, 8],
-    8: [1, 2, 3, 4, 5, 6, 7, 8],
+BASE_URL      = "https://www.srbgnrexams.ac.in"
+LOGIN_URL_1   = f"{BASE_URL}/Students/MarksMemo/Login.aspx"
+LOGIN_URL_2   = f"{BASE_URL}/hdfc/Students/Login.aspx"
+DASHBOARD_URL = f"{BASE_URL}/hdfc/Students/DashBoard.aspx"
+MARKS_URL     = f"{BASE_URL}/hdfc/Students/MarksMemo/Login.aspx"
+
+EXAM_NAMES = {
+    1: "NOV-15", 2: "APR-16", 3: "NOV-16", 4: "APR-17", 5: "NOV-17",
+    6: "APR-18", 7: "JULY-18", 8: "NOV-18", 9: "APR-19", 10: "JUN-19",
+    11: "AUG-19", 12: "NOV-19", 13: "JAN-20", 14: "SEP-20", 15: "JAN-21",
+    16: "DEC-20", 17: "JULY-21", 18: "AUG-21", 19: "SEP-21", 20: "OCT-21",
+    21: "MAR-22", 22: "JULY-22", 23: "JUN-22", 24: "JAN-23", 25: "JUN-23",
+    26: "OCT-23", 27: "JAN-24", 28: "MAY-24", 35: "JUNE-24", 36: "OCT-24",
+    37: "NOV-24", 38: "APR-25", 39: "AUG-25", 40: "NOV-25", 41: "APR-26"
 }
 
-# -----------------------------
-# 2. ARREAR RULES (ODD / EVEN)
-# -----------------------------
-def get_allowed_exams_for_arrear(sem: int) -> List[int]:
-    """
-    Returns allowed exam periods based on semester arrear rules.
-    """
-    if sem == 1 or sem == 3:
-        return [3, 5, 7]   # odd exams
-    elif sem == 2 or sem == 4:
-        return [4, 6, 8]   # even exams
-    else:
-        # default fallback
-        return [1, 2, 3, 4, 5, 6, 7, 8]
+def get_exam_ids_for_student(regd_no):
+    try:
+        joining_year = int(regd_no[2:4])
+    except:
+        joining_year = 15  # fallback to earliest
 
+    relevant_ids = []
+    for exam_id, exam_name in EXAM_NAMES.items():
+        year_str = exam_name.split('-')[-1]
+        try:
+            year = int(year_str)
+            # Include from one year before joining (for NOV before first sem)
+            if year >= joining_year - 1:
+                relevant_ids.append(exam_id)
+        except:
+            pass
+    return sorted(relevant_ids)
 
-# -----------------------------
-# 3. MAIN LOGIC
-# -----------------------------
-def get_next_exam_periods(sem: int) -> List[int]:
-    """
-    Returns valid exam periods based on semester.
-    """
-    return SEM_TO_EXAMS.get(sem, [])
-
-
-def filter_arrears(sem: int, arrears: List[str]) -> Dict:
-    """
-    Example input:
-        sem = 3
-        arrears = ["Math", "Physics"]
-
-    Output:
-        {
-            "sem": 3,
-            "allowed_exams": [5, 7],
-            "subjects": [...]
-        }
-    """
-
-    allowed_exams = get_allowed_exams_for_arrear(sem)
-
+def get_viewstate(session, url):
+    response = session.get(url, verify=False, timeout=15)
+    soup = BeautifulSoup(response.text, "html.parser")
     return {
-        "semester": sem,
-        "allowed_exams": allowed_exams,
-        "arrears": arrears,
-        "message": f"Semester {sem} arrears can be cleared in exams {allowed_exams}"
+        "__VIEWSTATE": soup.find("input", {"name": "__VIEWSTATE"})["value"],
+        "__VIEWSTATEGENERATOR": soup.find("input", {"name": "__VIEWSTATEGENERATOR"})["value"],
+        "__EVENTVALIDATION": soup.find("input", {"name": "__EVENTVALIDATION"})["value"],
     }
 
-
-def get_exam_plan(sem: int) -> Dict:
-    """
-    Full semester exam planning.
-    """
-
-    return {
-        "semester": sem,
-        "next_exam_periods": get_next_exam_periods(sem),
-        "arrear_rules": get_allowed_exams_for_arrear(sem)
+def login_step1(session, regd_no, password="0"):
+    tokens = get_viewstate(session, LOGIN_URL_1)
+    payload = {**tokens,
+        "ctl00$ContentPlaceHolder1$txtRegdNo": regd_no,
+        "ctl00$ContentPlaceHolder1$txtPassword": password,
+        "ctl00$ContentPlaceHolder1$cmbSubmit": "Get Data"
     }
+    return session.post(LOGIN_URL_1, data=payload, verify=False, timeout=15)
 
+def login_step2(session, regd_no, password="0"):
+    tokens = get_viewstate(session, LOGIN_URL_2)
+    payload = {**tokens,
+        "ctl00$ContentPlaceHolder1$txtRegdNo": regd_no,
+        "ctl00$ContentPlaceHolder1$txtPassword": password,
+        "ctl00$ContentPlaceHolder1$cmbSubmit": "Get Data"
+    }
+    return session.post(LOGIN_URL_2, data=payload, verify=False, timeout=15)
 
-# -----------------------------
-# 4. TEST (optional local run)
-# -----------------------------
-if __name__ == "__main__":
-    print(get_exam_plan(3))
-    print(filter_arrears(3, ["Math", "DBMS"]))
+def click_marks_memo(session, dashboard_res):
+    soup = BeautifulSoup(dashboard_res.text, "html.parser")
+    tokens = {
+        "__VIEWSTATE": soup.find("input", {"name": "__VIEWSTATE"})["value"],
+        "__VIEWSTATEGENERATOR": soup.find("input", {"name": "__VIEWSTATEGENERATOR"})["value"],
+        "__EVENTVALIDATION": soup.find("input", {"name": "__EVENTVALIDATION"})["value"],
+    }
+    payload = {**tokens,
+        "ctl00$body$navMM": "Marks Memo",
+        "ctl00$body$hfStudId": soup.find("input", {"name": "ctl00$body$hfStudId"})["value"],
+        "ctl00$body$hfGroupId": soup.find("input", {"name": "ctl00$body$hfGroupId"})["value"],
+        "ctl00$body$hfBatchId": soup.find("input", {"name": "ctl00$body$hfBatchId"})["value"],
+        "ctl00$body$hfExamId": soup.find("input", {"name": "ctl00$body$hfExamId"})["value"],
+    }
+    return session.post(DASHBOARD_URL, data=payload, verify=False, timeout=15)
+
+def get_marks_pdf(session, marks_page_res, exam_id, semester):
+    soup = BeautifulSoup(marks_page_res.text, "html.parser")
+    tokens = {
+        "__VIEWSTATE": soup.find("input", {"name": "__VIEWSTATE"})["value"],
+        "__VIEWSTATEGENERATOR": soup.find("input", {"name": "__VIEWSTATEGENERATOR"})["value"],
+        "__EVENTVALIDATION": soup.find("input", {"name": "__EVENTVALIDATION"})["value"],
+    }
+    payload = {**tokens,
+        "ctl00$ContentPlaceHolder1$ddlExam": exam_id,
+        "ctl00$ContentPlaceHolder1$ddlSemester": semester,
+        "ctl00$ContentPlaceHolder1$hfStudId": soup.find("input", {"name": "ctl00$ContentPlaceHolder1$hfStudId"})["value"],
+        "ctl00$ContentPlaceHolder1$cmbSubmit": "Get Data"
+    }
+    return session.post(MARKS_URL, data=payload, verify=False, timeout=15)
+
+def parse_pdf(pdf_bytes, exam_name, semester):
+    subjects = []
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        tables = pdf.pages[0].extract_tables()
+        if not tables:
+            return None
+        for table in tables:
+            for row in table:
+                if not row or len(row) < 5:
+                    continue
+                col1 = (row[1] or "").split("\n")
+                col3 = (row[3] or "").split("\n")
+                col4 = (row[4] or "").split("\n")
+                if col1[0].strip() == "COURSE TITLE":
+                    continue
+                for i in range(len(col1)):
+                    course = col1[i].strip() if i < len(col1) else ""
+                    grade  = col3[i].strip() if i < len(col3) else ""
+                    credit = col4[i].strip() if i < len(col4) else "0"
+                    if len(course) > 3:
+                        subjects.append({
+                            "subject": course,
+                            "grade": grade,
+                            "credits": credit,
+                            "status": "pass" if grade not in ["F", "ABS", ""] else "fail",
+                            "exam": exam_name,
+                            "semester": semester
+                        })
+    return subjects if subjects else None
